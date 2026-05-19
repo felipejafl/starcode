@@ -30,6 +30,12 @@
                         <flux:sidebar.item icon="key" :href="route('admin.permissions.index')" :current="request()->routeIs('admin.permissions.*')" wire:navigate>
                             {{ __('Permisos') }}
                         </flux:sidebar.item>
+
+                        @can('auditoria.ver')
+                            <flux:sidebar.item icon="clipboard-document-list" :href="route('admin.audit-log.index')" :current="request()->routeIs('admin.audit-log.*')" wire:navigate>
+                                {{ __('Auditoría') }}
+                            </flux:sidebar.item>
+                        @endcan
                     </flux:sidebar.group>
                 @endcan
             </flux:sidebar.nav>

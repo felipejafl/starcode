@@ -19,4 +19,8 @@ Route::middleware(['auth', 'verified', 'can:admin.acceder'])
         Route::livewire('permissions', 'pages::admin.permissions')
             ->middleware('can:permisos.ver')
             ->name('permissions.index');
+
+        Route::livewire('audit-log', 'pages::admin.audit-log')
+            ->middleware('can:auditoria.ver')
+            ->name('audit-log.index');
     });

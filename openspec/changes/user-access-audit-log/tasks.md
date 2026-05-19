@@ -39,17 +39,17 @@ Chain strategy: feature-branch-chain
 
 ## Phase 2: Event Logging (PR 2)
 
-- [ ] 2.1 Create auth listeners in `app/Listeners/`: `LogSuccessfulLogin` (`Login`), `LogFailedLogin` (`Failed`), `LogLogout` (`Logout`), `LogLockout` (`Lockout`), `LogTwoFactorEnabled`, `LogTwoFactorDisabled`, `LogEmailVerified` (`Verified`) — 7 files
-- [ ] 2.2 Create permission listeners in `app/Listeners/`: `LogRoleAttached`, `LogRoleDetached`, `LogPermissionAttached`, `LogPermissionDetached` — 4 files
-- [ ] 2.3 Inject `activity()->log('registered', ...)` in `app/Actions/Fortify/CreateNewUser.php` after `User::create()`
-- [ ] 2.4 Inject `activity()->log('password_reset', ...)` in `app/Actions/Fortify/ResetUserPassword.php` after `->save()`
-- [ ] 2.5 Register all 11 listeners via `Event::listen()` in `app/Providers/AppServiceProvider.php::boot()`
+- [x] 2.1 Create auth listeners in `app/Listeners/`: `LogSuccessfulLogin` (`Login`), `LogFailedLogin` (`Failed`), `LogLogout` (`Logout`), `LogLockout` (`Lockout`), `LogTwoFactorEnabled`, `LogTwoFactorDisabled`, `LogEmailVerified` (`Verified`) — 7 files
+- [x] 2.2 Create permission listeners in `app/Listeners/`: `LogRoleAttached`, `LogRoleDetached`, `LogPermissionAttached`, `LogPermissionDetached` — 4 files
+- [x] 2.3 Inject `activity()->log('registered', ...)` in `app/Actions/Fortify/CreateNewUser.php` after `User::create()`
+- [x] 2.4 Inject `activity()->log('password_reset', ...)` in `app/Actions/Fortify/ResetUserPassword.php` after `->save()`
+- [x] 2.5 Register all 11 listeners via `Event::listen()` in `app/Providers/AppServiceProvider.php::boot()`
 
 ## Phase 3: Admin Audit UI (PR 3)
 
-- [ ] 3.1 Add `auditoria.ver` to permissions array in `database/seeders/RolesAndPermissionsSeeder.php`
-- [ ] 3.2 Add `Route::livewire('audit-log', 'pages::admin.audit-log')->middleware('can:auditoria.ver')->name('audit-log.index')` in `routes/admin.php` inside the existing admin group
-- [ ] 3.3 Create `resources/views/pages/admin/⚡audit-log.blade.php` Livewire SFC: text search (`wire:model.live`), date range inputs, action-type `<flux:select>`, Flux table (timestamp, causer, action, subject, properties summary), pagination 25/page, `<flux:modal>` for full properties JSON
+- [x] 3.1 Add `auditoria.ver` to permissions array in `database/seeders/RolesAndPermissionsSeeder.php`
+- [x] 3.2 Add `Route::livewire('audit-log', 'pages::admin.audit-log')->middleware('can:auditoria.ver')->name('audit-log.index')` in `routes/admin.php` inside the existing admin group
+- [x] 3.3 Create `resources/views/pages/admin/⚡audit-log.blade.php` Livewire SFC: text search (`wire:model.live`), date range inputs, action-type `<flux:select>`, Flux table (timestamp, causer, action, subject, properties summary), pagination 25/page, `<flux:modal>` for full properties JSON
 
 ## Phase 4: Tests (PR 4)
 
