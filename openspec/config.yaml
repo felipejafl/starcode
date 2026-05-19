@@ -1,0 +1,61 @@
+schema: spec-driven
+
+context: |
+  Tech stack: Laravel 13, Livewire 4, Flux UI 2, Tailwind CSS 4, Vite 8, Pest 4, SQLite
+  Architecture: Fortify auth, Spatie permissions, Livewire SFC/MFC components, Laravel default dir layout
+  Testing: Pest 4 with RefreshDatabase, php artisan test
+  Style: Laravel Pint (preset laravel), PHP 8.3+ type hints, Pest conventions
+
+strict_tdd: true
+
+testing:
+  runner:
+    command: "php artisan test"
+    framework: Pest 4 (PHPUnit 12)
+  layers:
+    unit:
+      available: true
+      tool: Pest
+    integration:
+      available: true
+      tool: Pest / RefreshDatabase / Livewire component tests
+    e2e:
+      available: false
+      tool: —
+  coverage:
+    available: false
+    command: —
+  quality:
+    linter:
+      available: true
+      command: "vendor/bin/pint --test"
+    type_checker:
+      available: false
+      command: —
+    formatter:
+      available: true
+      command: "vendor/bin/pint"
+
+rules:
+  proposal:
+    - Include rollback plan for risky changes
+  specs:
+    - Use Given/When/Then for scenarios
+    - Use RFC 2119 keywords (MUST, SHALL, SHOULD, MAY)
+  design:
+    - Include sequence diagrams for complex flows
+    - Document architecture decisions with rationale
+  tasks:
+    - Group by phase, use hierarchical numbering
+    - Keep tasks completable in one session
+  apply:
+    - Follow existing code patterns
+    - Use php artisan make: commands for new files
+    tdd: true
+    test_command: "php artisan test --compact"
+  verify:
+    test_command: "php artisan test --compact"
+    build_command: "npm run build"
+    coverage_threshold: 0
+  archive:
+    - Warn before merging destructive deltas

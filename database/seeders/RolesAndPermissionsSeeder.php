@@ -2,9 +2,9 @@
 
 namespace Database\Seeders;
 
+use App\Models\Permission;
+use App\Models\Role;
 use Illuminate\Database\Seeder;
-use Spatie\Permission\Models\Permission;
-use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
 
 class RolesAndPermissionsSeeder extends Seeder
@@ -30,6 +30,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'permisos.crear',
             'permisos.actualizar',
             'permisos.eliminar',
+            'auditoria.ver',
         ])->map(fn (string $permission): Permission => Permission::findOrCreate($permission, 'web'));
 
         Role::findOrCreate('Super Administrador', 'web')->syncPermissions($permissions);
