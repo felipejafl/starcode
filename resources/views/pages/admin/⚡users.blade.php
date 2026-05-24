@@ -5,18 +5,25 @@ use App\Concerns\ProfileValidationRules;
 use App\Models\Role;
 use App\Models\User;
 use Flux\Flux;
-use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Title;
+use Livewire\Attributes\Url;
 use Livewire\Component;
+use Livewire\WithPagination;
 
 new #[Title('Usuarios')] class extends Component {
     use PasswordValidationRules;
     use ProfileValidationRules;
+    use WithPagination;
 
     public string $search = '';
+
+    #[Url]
+    public int $perPage = 10;
+
     public ?int $editingUserId = null;
     public string $name = '';
     public string $email = '';
@@ -27,6 +34,11 @@ new #[Title('Usuarios')] class extends Component {
      * @var array<int, string>
      */
     public array $selectedRoles = [];
+
+    /**
+     * @var array<int, int>
+     */
+    public array $perPageOptions = [10, 20, 50, 100];
 
     public function mount(): void
     {
@@ -51,7 +63,7 @@ new #[Title('Usuarios')] class extends Component {
     }
 
     #[Computed]
-    public function users(): Collection
+    public function users(): LengthAwarePaginator
     {
         return User::query()
             ->with('roles')
@@ -59,15 +71,23 @@ new #[Title('Usuarios')] class extends Component {
                 ->where('name', 'like', "%{$this->search}%")
                 ->orWhere('email', 'like', "%{$this->search}%"))
             ->orderBy('name')
-            ->get();
+            ->paginate($this->perPage)
+            ->withQueryString();
     }
 
     #[Computed]
-    public function availableRoles(): Collection
+    public function availableRoles(): \Illuminate\Database\Eloquent\Collection
     {
         return Role::query()
             ->orderBy('name')
             ->get();
+    }
+
+    public function updating(string $name): void
+    {
+        if ($name === 'perPage' || $name === 'search') {
+            $this->resetPage();
+        }
     }
 
     public function create(): void
@@ -187,11 +207,21 @@ new #[Title('Usuarios')] class extends Component {
     <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <flux:input wire:model.live="search" icon="magnifying-glass" :placeholder="__('Buscar por nombre o email...')" class="max-w-sm" />
 
-        @can('usuarios.crear')
-            <flux:modal.trigger name="user-form">
-                <flux:button variant="primary" wire:click="create" icon="plus">{{ __('Crear usuario') }}</flux:button>
-            </flux:modal.trigger>
-        @endcan
+        <div class="flex items-center gap-3">
+            <flux:field>
+                <flux:select wire:model.live="perPage">
+                    @foreach ($perPageOptions as $option)
+                        <flux:select.option value="{{ $option }}">{{ $option }} {{ __('por página') }}</flux:select.option>
+                    @endforeach
+                </flux:select>
+            </flux:field>
+
+            @can('usuarios.crear')
+                <flux:modal.trigger name="user-form">
+                    <flux:button variant="primary" wire:click="create" icon="plus">{{ __('Crear usuario') }}</flux:button>
+                </flux:modal.trigger>
+            @endcan
+        </div>
     </div>
 
     {{-- Tabla de usuarios --}}
@@ -249,6 +279,21 @@ new #[Title('Usuarios')] class extends Component {
             @endforelse
         </tbody>
     </x-table>
+
+    {{-- Pagination footer --}}
+    <div class="flex items-center justify-between">
+        <flux:text class="text-neutral-500">
+            {{ __('Mostrando :first - :last de :total', [
+                'first' => $this->users->firstItem() ?? 0,
+                'last' => $this->users->lastItem() ?? 0,
+                'total' => $this->users->total(),
+            ]) }}
+        </flux:text>
+
+        @if ($this->users->hasPages())
+            {{ $this->users->links() }}
+        @endif
+    </div>
 
     {{-- Modal crear / editar --}}
     <flux:modal name="user-form" class="w-full md:w-[36rem]">

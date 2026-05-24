@@ -2,19 +2,32 @@
 
 use App\Models\Permission;
 use Flux\Flux;
-use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Title;
+use Livewire\Attributes\Url;
 use Livewire\Component;
+use Livewire\WithPagination;
 use Spatie\Permission\PermissionRegistrar;
 
 new #[Title('Permisos')] class extends Component {
+    use WithPagination;
+
     public string $search = '';
+
+    #[Url]
+    public int $perPage = 10;
+
     public ?int $editingPermissionId = null;
     public string $name = '';
+
+    /**
+     * @var array<int, int>
+     */
+    public array $perPageOptions = [10, 20, 50, 100];
 
     public function mount(): void
     {
@@ -37,13 +50,21 @@ new #[Title('Permisos')] class extends Component {
     }
 
     #[Computed]
-    public function permissions(): Collection
+    public function permissions(): LengthAwarePaginator
     {
         return Permission::query()
             ->with('roles')
             ->when($this->search, fn ($q) => $q->where('name', 'like', "%{$this->search}%"))
             ->orderBy('name')
-            ->get();
+            ->paginate($this->perPage)
+            ->withQueryString();
+    }
+
+    public function updating(string $name): void
+    {
+        if ($name === 'perPage' || $name === 'search') {
+            $this->resetPage();
+        }
     }
 
     public function create(): void
@@ -150,11 +171,21 @@ new #[Title('Permisos')] class extends Component {
     <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <flux:input wire:model.live="search" icon="magnifying-glass" :placeholder="__('Buscar por nombre...')" class="max-w-sm" />
 
-        @can('permisos.crear')
-            <flux:modal.trigger name="permission-form">
-                <flux:button variant="primary" wire:click="create" icon="plus">{{ __('Crear permiso') }}</flux:button>
-            </flux:modal.trigger>
-        @endcan
+        <div class="flex items-center gap-3">
+            <flux:field>
+                <flux:select wire:model.live="perPage">
+                    @foreach ($perPageOptions as $option)
+                        <flux:select.option value="{{ $option }}">{{ $option }} {{ __('por página') }}</flux:select.option>
+                    @endforeach
+                </flux:select>
+            </flux:field>
+
+            @can('permisos.crear')
+                <flux:modal.trigger name="permission-form">
+                    <flux:button variant="primary" wire:click="create" icon="plus">{{ __('Crear permiso') }}</flux:button>
+                </flux:modal.trigger>
+            @endcan
+        </div>
     </div>
 
     {{-- Tabla de permisos --}}
@@ -214,6 +245,21 @@ new #[Title('Permisos')] class extends Component {
             @endforelse
         </tbody>
     </x-table>
+
+    {{-- Pagination footer --}}
+    <div class="flex items-center justify-between">
+        <flux:text class="text-neutral-500">
+            {{ __('Mostrando :first - :last de :total', [
+                'first' => $this->permissions->firstItem() ?? 0,
+                'last' => $this->permissions->lastItem() ?? 0,
+                'total' => $this->permissions->total(),
+            ]) }}
+        </flux:text>
+
+        @if ($this->permissions->hasPages())
+            {{ $this->permissions->links() }}
+        @endif
+    </div>
 
     {{-- Modal crear / editar --}}
     <flux:modal name="permission-form" class="w-full md:w-[36rem]">

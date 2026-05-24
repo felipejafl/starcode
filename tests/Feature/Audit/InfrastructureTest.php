@@ -4,10 +4,7 @@ use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Activitylog\Models\Activity;
-
-uses(RefreshDatabase::class);
 
 beforeEach(function () {
     $this->seed(RolesAndPermissionsSeeder::class);

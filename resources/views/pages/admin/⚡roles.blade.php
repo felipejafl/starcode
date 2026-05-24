@@ -3,17 +3,25 @@
 use App\Models\Permission;
 use App\Models\Role;
 use Flux\Flux;
-use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Title;
+use Livewire\Attributes\Url;
 use Livewire\Component;
+use Livewire\WithPagination;
 use Spatie\Permission\PermissionRegistrar;
 
 new #[Title('Roles')] class extends Component {
+    use WithPagination;
+
     public string $search = '';
+
+    #[Url]
+    public int $perPage = 10;
+
     public ?int $editingRoleId = null;
     public string $name = '';
 
@@ -21,6 +29,11 @@ new #[Title('Roles')] class extends Component {
      * @var array<int, string>
      */
     public array $selectedPermissions = [];
+
+    /**
+     * @var array<int, int>
+     */
+    public array $perPageOptions = [10, 20, 50, 100];
 
     public function mount(): void
     {
@@ -45,21 +58,29 @@ new #[Title('Roles')] class extends Component {
     }
 
     #[Computed]
-    public function roles(): Collection
+    public function roles(): LengthAwarePaginator
     {
         return Role::query()
             ->with('permissions')
             ->when($this->search, fn ($q) => $q->where('name', 'like', "%{$this->search}%"))
             ->orderBy('name')
-            ->get();
+            ->paginate($this->perPage)
+            ->withQueryString();
     }
 
     #[Computed]
-    public function permissions(): Collection
+    public function permissions(): \Illuminate\Database\Eloquent\Collection
     {
         return Permission::query()
             ->orderBy('name')
             ->get();
+    }
+
+    public function updating(string $name): void
+    {
+        if ($name === 'perPage' || $name === 'search') {
+            $this->resetPage();
+        }
     }
 
     public function create(): void
@@ -167,11 +188,21 @@ new #[Title('Roles')] class extends Component {
     <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <flux:input wire:model.live="search" icon="magnifying-glass" :placeholder="__('Buscar por nombre...')" class="max-w-sm" />
 
-        @can('roles.crear')
-            <flux:modal.trigger name="role-form">
-                <flux:button variant="primary" wire:click="create" icon="plus">{{ __('Crear rol') }}</flux:button>
-            </flux:modal.trigger>
-        @endcan
+        <div class="flex items-center gap-3">
+            <flux:field>
+                <flux:select wire:model.live="perPage">
+                    @foreach ($perPageOptions as $option)
+                        <flux:select.option value="{{ $option }}">{{ $option }} {{ __('por página') }}</flux:select.option>
+                    @endforeach
+                </flux:select>
+            </flux:field>
+
+            @can('roles.crear')
+                <flux:modal.trigger name="role-form">
+                    <flux:button variant="primary" wire:click="create" icon="plus">{{ __('Crear rol') }}</flux:button>
+                </flux:modal.trigger>
+            @endcan
+        </div>
     </div>
 
     {{-- Tabla de roles --}}
@@ -227,6 +258,21 @@ new #[Title('Roles')] class extends Component {
             @endforelse
         </tbody>
     </x-table>
+
+    {{-- Pagination footer --}}
+    <div class="flex items-center justify-between">
+        <flux:text class="text-neutral-500">
+            {{ __('Mostrando :first - :last de :total', [
+                'first' => $this->roles->firstItem() ?? 0,
+                'last' => $this->roles->lastItem() ?? 0,
+                'total' => $this->roles->total(),
+            ]) }}
+        </flux:text>
+
+        @if ($this->roles->hasPages())
+            {{ $this->roles->links() }}
+        @endif
+    </div>
 
     {{-- Modal crear / editar --}}
     <flux:modal name="role-form" class="w-full md:w-[36rem]">

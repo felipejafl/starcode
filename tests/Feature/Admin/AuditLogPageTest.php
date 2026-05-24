@@ -2,10 +2,7 @@
 
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
-use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Spatie\Activitylog\Models\Activity;
-
-uses(LazilyRefreshDatabase::class);
 
 beforeEach(function () {
     $this->seed(RolesAndPermissionsSeeder::class);
@@ -185,6 +182,43 @@ test('date range filter shows only entries within range', function () {
         ->get(route('admin.audit-log.index', ['date_start' => $startDate, 'date_end' => $endDate]))
         ->assertSee('logout')
         ->assertDontSee('login');
+});
+
+// --- Pagination Page 2 Navigation (R7) ---
+
+test('pagination shows 25 entries per page and navigates to page 2', function () {
+    $user = User::factory()->create();
+    $user->assignRole('Super Administrador');
+
+    // Clear seeder entries
+    Activity::query()->delete();
+
+    // Create 30 entries (more than 25 per page)
+    for ($i = 1; $i <= 30; $i++) {
+        Activity::create([
+            'log_name' => 'default',
+            'description' => "action_{$i}",
+            'causer_type' => 'App\\Models\\User',
+            'causer_id' => $user->id,
+            'created_at' => now()->subMinutes(30 - $i),
+        ]);
+    }
+
+    // Page 1 should show action_30 through action_6 (most recent first, 25 items)
+    $response = $this->actingAs($user)
+        ->get(route('admin.audit-log.index'));
+
+    $response->assertSee('action_30')
+        ->assertSee('action_6')
+        ->assertDontSee('action_5');
+
+    // Page 2 should show action_5 through action_1
+    $response = $this->actingAs($user)
+        ->get(route('admin.audit-log.index', ['page' => 2]));
+
+    $response->assertSee('action_5')
+        ->assertSee('action_1')
+        ->assertDontSee('action_30');
 });
 
 // --- Properties Modal (R10) ---

@@ -53,8 +53,15 @@ Chain strategy: feature-branch-chain
 
 ## Phase 4: Tests (PR 4)
 
-- [ ] 4.1 `tests/Feature/Admin/AuditLogAccessTest.php` — 403 without `auditoria.ver`, 200 with; renders sidebar entry
-- [ ] 4.2 `tests/Feature/Auth/AuthAuditTest.php` — login/logout/failed/register/reset/2FA/verify each produce activity entry per spec scenarios
-- [ ] 4.3 `tests/Feature/Admin/ModelAuditTest.php` — User/Role/Permission CRUD entries; role/permission assignment entries; password exclusion from properties
-- [ ] 4.4 Run `php artisan test --compact`; verify all existing + new pass
-- [ ] 4.5 Run `vendor/bin/pint --dirty --format agent`
+- [x] 4.1 `tests/Feature/Admin/AuditLogAccessTest.php` — 403 without `auditoria.ver`, 200 with; renders sidebar entry
+- [x] 4.2 `tests/Feature/Auth/AuthAuditTest.php` — login/logout/failed/register/reset/2FA/verify each produce activity entry per spec scenarios
+- [x] 4.3 `tests/Feature/Admin/ModelAuditTest.php` — User/Role/Permission CRUD entries; role/permission assignment entries; password exclusion from properties
+- [x] 4.4 Run `php artisan test --compact`; verify all existing + new pass
+- [x] 4.5 Run `vendor/bin/pint --dirty --format agent`
+
+## Phase 5: Verify Gaps (post-verify fixes)
+
+- [x] 5.1 Add cleanup/retention test: `activitylog:clean` removes entries older than 90 days, preserves recent
+- [x] 5.2 Add pagination page-2 navigation test: >25 entries, assert page 2 shows correct subset
+- [x] 5.3 Fix filter overlap: wrap search input in `flux:field` with `sr-only` label, increase gap to `gap-4`
+- [x] 5.4 Create apply-progress artifact with TDD Cycle Evidence table

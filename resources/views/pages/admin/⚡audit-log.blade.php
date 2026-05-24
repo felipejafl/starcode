@@ -9,6 +9,8 @@ use Livewire\Component;
 use Spatie\Activitylog\Models\Activity;
 
 new #[Title('Auditoría')] class extends Component {
+    use Livewire\WithPagination;
+
     #[Url]
     public string $search = '';
 
@@ -20,6 +22,14 @@ new #[Title('Auditoría')] class extends Component {
 
     #[Url]
     public ?string $action_type = null;
+
+    #[Url]
+    public int $perPage = 25;
+
+    /**
+     * @var array<int, int>
+     */
+    public array $perPageOptions = [10, 20, 50, 100];
 
     public function mount(): void
     {
@@ -49,7 +59,15 @@ new #[Title('Auditoría')] class extends Component {
             ->when($this->date_end, fn ($q) => $q->whereDate('created_at', '<=', $this->date_end))
             ->when($this->action_type, fn ($q) => $q->where('log_name', $this->action_type))
             ->orderBy('created_at', 'desc')
-            ->paginate(25);
+            ->paginate($this->perPage)
+            ->withQueryString();
+    }
+
+    public function updating(string $name): void
+    {
+        if (in_array($name, ['perPage', 'search', 'date_start', 'date_end', 'action_type'], true)) {
+            $this->resetPage();
+        }
     }
 
     #[Computed]
@@ -120,39 +138,47 @@ new #[Title('Auditoría')] class extends Component {
         :subheading="__('Revisá quién hizo qué, cuándo y sobre qué recurso en el sistema.')"
     />
 
-    {{-- Filters --}}
-    <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div class="flex flex-1 flex-col gap-3 sm:flex-row sm:items-end">
-            <flux:input
-                wire:model.live="search"
-                icon="magnifying-glass"
-                :placeholder="__('Buscar por acción o tipo...')"
-                class="max-w-xs"
-            />
+    {{-- Toolbar --}}
+    <div class="space-y-3">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <flux:input wire:model.live="search" icon="magnifying-glass" :placeholder="__('Buscar por acción o tipo...')" class="max-w-sm" />
 
             <flux:field>
-                <flux:label>{{ __('Desde') }}</flux:label>
-                <flux:input wire:model="date_start" type="date" />
-            </flux:field>
-
-            <flux:field>
-                <flux:label>{{ __('Hasta') }}</flux:label>
-                <flux:input wire:model="date_end" type="date" />
-            </flux:field>
-
-            <flux:field>
-                <flux:label>{{ __('Tipo') }}</flux:label>
-                <flux:select wire:model.live="action_type">
-                    @foreach ($this->actionTypes as $value => $label)
-                        <flux:select.option value="{{ $value }}">{{ $label }}</flux:select.option>
+                <flux:select wire:model.live="perPage">
+                    @foreach ($perPageOptions as $option)
+                        <flux:select.option value="{{ $option }}">{{ $option }} {{ __('por página') }}</flux:select.option>
                     @endforeach
                 </flux:select>
             </flux:field>
         </div>
 
-        <flux:button variant="ghost" wire:click="resetFilters" icon="x-mark">
-            {{ __('Limpiar filtros') }}
-        </flux:button>
+        {{-- Filters --}}
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-end">
+                <flux:field class="sm:min-w-44">
+                    <flux:label>{{ __('Desde') }}</flux:label>
+                    <flux:input wire:model="date_start" type="date" />
+                </flux:field>
+
+                <flux:field class="sm:min-w-44">
+                    <flux:label>{{ __('Hasta') }}</flux:label>
+                    <flux:input wire:model="date_end" type="date" />
+                </flux:field>
+
+                <flux:field class="sm:min-w-48">
+                    <flux:label>{{ __('Tipo') }}</flux:label>
+                    <flux:select wire:model.live="action_type">
+                        @foreach ($this->actionTypes as $value => $label)
+                            <flux:select.option value="{{ $value }}">{{ $label }}</flux:select.option>
+                        @endforeach
+                    </flux:select>
+                </flux:field>
+            </div>
+
+            <flux:button variant="ghost" wire:click="resetFilters" icon="x-mark">
+                {{ __('Limpiar filtros') }}
+            </flux:button>
+        </div>
     </div>
 
     {{-- Table --}}
@@ -229,18 +255,18 @@ new #[Title('Auditoría')] class extends Component {
         </tbody>
     </x-table>
 
-    {{-- Pagination --}}
-    @if ($this->entries->hasPages())
-        <div class="flex items-center justify-between">
-            <flux:text class="text-neutral-500">
-                {{ __('Mostrando :first - :last de :total', [
-                    'first' => $this->entries->firstItem(),
-                    'last' => $this->entries->lastItem(),
-                    'total' => $this->entries->total(),
-                ]) }}
-            </flux:text>
+    {{-- Pagination footer --}}
+    <div class="flex items-center justify-between">
+        <flux:text class="text-neutral-500">
+            {{ __('Mostrando :first - :last de :total', [
+                'first' => $this->entries->firstItem() ?? 0,
+                'last' => $this->entries->lastItem() ?? 0,
+                'total' => $this->entries->total(),
+            ]) }}
+        </flux:text>
 
+        @if ($this->entries->hasPages())
             {{ $this->entries->links() }}
-        </div>
-    @endif
+        @endif
+    </div>
 </section>
