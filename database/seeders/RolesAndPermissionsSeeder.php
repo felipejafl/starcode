@@ -10,7 +10,10 @@ use Spatie\Permission\PermissionRegistrar;
 class RolesAndPermissionsSeeder extends Seeder
 {
     /**
-     * Seed the application's roles and permissions.
+     * Crea los permisos base y los asigna al rol administrativo principal.
+     *
+     * Lo invoca DatabaseSeeder; limpia la caché de Spatie Permission antes de sincronizar las
+     * capacidades para que la autorización refleje inmediatamente los datos sembrados.
      */
     public function run(): void
     {

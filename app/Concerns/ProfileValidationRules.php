@@ -9,7 +9,10 @@ use Illuminate\Validation\Rule;
 trait ProfileValidationRules
 {
     /**
-     * Get the validation rules used to validate user profiles.
+     * Compone las reglas para crear o actualizar el perfil de un usuario.
+     *
+     * Lo consumen los componentes Livewire de perfil y administración; cuando recibe un ID,
+     * permite conservar el correo electrónico del usuario que se está editando.
      *
      * @return array<string, array<int, ValidationRule|array<mixed>|string>>
      */
@@ -22,7 +25,9 @@ trait ProfileValidationRules
     }
 
     /**
-     * Get the validation rules used to validate user names.
+     * Devuelve las reglas reutilizables para el nombre de un usuario.
+     *
+     * Lo invoca profileRules() para las validaciones de perfil y de administración.
      *
      * @return array<int, ValidationRule|array<mixed>|string>
      */
@@ -32,7 +37,9 @@ trait ProfileValidationRules
     }
 
     /**
-     * Get the validation rules used to validate user emails.
+     * Devuelve las reglas reutilizables para un correo electrónico único.
+     *
+     * Lo invoca profileRules(); el ID opcional excluye al usuario editado de la restricción de unicidad.
      *
      * @return array<int, ValidationRule|array<mixed>|string>
      */

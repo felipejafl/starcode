@@ -12,7 +12,10 @@ class ResetUserPassword implements ResetsUserPasswords
     use PasswordValidationRules;
 
     /**
-     * Validate and reset the user's forgotten password.
+     * Valida y restablece la contraseña olvidada de un usuario.
+     *
+     * Fortify invoca este método tras validar el token de restablecimiento. Persiste la nueva
+     * contraseña mediante el cast hash del modelo y registra una actividad de autenticación.
      *
      * @param  array<string, string>  $input
      */

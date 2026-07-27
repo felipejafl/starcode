@@ -9,6 +9,12 @@ use Spatie\Permission\Events\PermissionAttachedEvent;
 
 class LogPermissionAttached
 {
+    /**
+     * Registra la asignación de uno o varios permisos a un modelo autorizable.
+     *
+     * Lo invoca el dispatcher de Laravel cuando Spatie Permission emite PermissionAttachedEvent;
+     * conserva un actor nulo si la asignación ocurre fuera de una solicitud autenticada.
+     */
     public function handle(PermissionAttachedEvent $event): void
     {
         $permissions = $this->resolvePermissions($event->permissionsOrIds);
@@ -21,10 +27,10 @@ class LogPermissionAttached
     }
 
     /**
-     * Resolve the causer for the activity log.
+     * Resuelve el actor de la actividad a partir del usuario autenticado.
      *
-     * Falls back to null when no authenticated user exists
-     * (e.g., console commands, seeders, or event-driven flows).
+     * Lo invoca handle(); devuelve null para comandos, seeders o flujos de eventos sin un usuario
+     * autenticado, de modo que la actividad quede identificada como ejecutada por el sistema.
      */
     protected function resolveCauser(): ?User
     {
@@ -34,7 +40,10 @@ class LogPermissionAttached
     }
 
     /**
-     * Resolve permission IDs or permission objects to a collection.
+     * Convierte los permisos o identificadores del evento en modelos de permiso.
+     *
+     * Lo invoca handle(); admite un modelo, una colección o un arreglo para cubrir las formas que
+     * Spatie Permission puede publicar en PermissionAttachedEvent.
      *
      * @return Collection<int, Permission>
      */

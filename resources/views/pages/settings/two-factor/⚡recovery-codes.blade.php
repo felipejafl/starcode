@@ -9,7 +9,10 @@ new class extends Component {
     public array $recoveryCodes = [];
 
     /**
-     * Mount the component.
+     * Carga los códigos de recuperación disponibles al montar el componente.
+     *
+     * Livewire lo ejecuta al incluir el componente desde security, después de que el usuario tenga
+     * doble factor habilitado.
      */
     public function mount(): void
     {
@@ -17,7 +20,10 @@ new class extends Component {
     }
 
     /**
-     * Generate new recovery codes for the user.
+     * Regenera y vuelve a cargar los códigos de recuperación del usuario autenticado.
+     *
+     * Lo invoca wire:click desde la vista; delega la persistencia a Fortify antes de refrescar el
+     * estado bloqueado que muestra los códigos nuevos.
      */
     public function regenerateRecoveryCodes(GenerateNewRecoveryCodes $generateNewRecoveryCodes): void
     {
@@ -27,7 +33,10 @@ new class extends Component {
     }
 
     /**
-     * Load the recovery codes for the user.
+     * Descifra y carga los códigos de recuperación del usuario autenticado.
+     *
+     * Lo invocan mount() y regenerateRecoveryCodes(); solo lee códigos con 2FA activo y registra
+     * un error de componente si el contenido cifrado no puede descifrarse.
      */
     private function loadRecoveryCodes(): void
     {

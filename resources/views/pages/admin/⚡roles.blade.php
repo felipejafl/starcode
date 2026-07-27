@@ -35,12 +35,23 @@ new #[Title('Roles')] class extends Component {
      */
     public array $perPageOptions = [10, 20, 50, 100];
 
+    /**
+     * Autoriza el acceso inicial al listado de roles.
+     *
+     * Livewire lo ejecuta al montar la ruta admin.roles definida en routes/admin.php; aborta con
+     * 403 si el usuario autenticado no conserva el permiso de consulta.
+     */
     public function mount(): void
     {
         abort_unless(Auth::user()->can('roles.ver'), 403);
     }
 
     /**
+     * Define las reglas del formulario de alta y edición de roles.
+     *
+     * Livewire las consume durante save(); excluye el rol editado de la unicidad y valida los
+     * permisos antes de sincronizarlos.
+     *
      * @return array<string, array<int, mixed>>
      */
     protected function rules(): array
@@ -58,6 +69,11 @@ new #[Title('Roles')] class extends Component {
     }
 
     #[Computed]
+    /**
+     * Obtiene la página de roles con sus permisos para la tabla administrativa.
+     *
+     * La vista consume $this->roles; precarga permisos para evitar consultas por fila.
+     */
     public function roles(): LengthAwarePaginator
     {
         return Role::query()
@@ -69,6 +85,11 @@ new #[Title('Roles')] class extends Component {
     }
 
     #[Computed]
+    /**
+     * Obtiene los permisos disponibles para el formulario de roles.
+     *
+     * La vista consume $this->permissions al renderizar las casillas de selección.
+     */
     public function permissions(): \Illuminate\Database\Eloquent\Collection
     {
         return Permission::query()
@@ -76,6 +97,11 @@ new #[Title('Roles')] class extends Component {
             ->get();
     }
 
+    /**
+     * Restablece la paginación cuando Livewire actualiza filtros de la tabla.
+     *
+     * Livewire lo invoca por convención al modificar search o perPage mediante wire:model.live.
+     */
     public function updating(string $name): void
     {
         if ($name === 'perPage' || $name === 'search') {
@@ -83,12 +109,22 @@ new #[Title('Roles')] class extends Component {
         }
     }
 
+    /**
+     * Prepara un formulario vacío para crear un rol.
+     *
+     * Lo invoca wire:click desde el botón de creación y verifica el permiso correspondiente.
+     */
     public function create(): void
     {
         $this->authorizeAbility('roles.crear');
         $this->resetForm();
     }
 
+    /**
+     * Carga un rol y sus permisos en el formulario de edición.
+     *
+     * Lo invoca wire:click desde cada fila; elimina errores previos después de cargar el estado.
+     */
     public function edit(int $roleId): void
     {
         $this->authorizeAbility('roles.actualizar');
@@ -102,6 +138,12 @@ new #[Title('Roles')] class extends Component {
         $this->resetErrorBag();
     }
 
+    /**
+     * Crea o actualiza un rol y sincroniza sus permisos.
+     *
+     * Lo invoca wire:submit; invalida la caché de Spatie Permission para que las autorizaciones
+     * posteriores observen inmediatamente la nueva asignación.
+     */
     public function save(): void
     {
         $isCreating = $this->editingRoleId === null;
@@ -131,6 +173,12 @@ new #[Title('Roles')] class extends Component {
             : __('Rol actualizado.'));
     }
 
+    /**
+     * Elimina un rol que no sea el rol administrativo principal.
+     *
+     * Lo invoca wire:click desde la tabla; bloquea la eliminación de Super Administrador e invalida
+     * la caché de permisos tras una baja válida.
+     */
     public function delete(int $roleId): void
     {
         $this->authorizeAbility('roles.eliminar');
@@ -154,17 +202,32 @@ new #[Title('Roles')] class extends Component {
         Flux::toast(variant: 'success', text: __('Rol eliminado.'));
     }
 
+    /**
+     * Descarta el estado del formulario y cierra el modal de roles.
+     *
+     * Lo invoca la interacción de cancelación de la vista y no realiza cambios persistentes.
+     */
     public function cancel(): void
     {
         $this->resetForm();
         Flux::modal('role-form')->close();
     }
 
+    /**
+     * Exige una capacidad administrativa para una acción del componente.
+     *
+     * Lo invocan las acciones públicas del CRUD y aborta la solicitud Livewire con 403 si falta.
+     */
     private function authorizeAbility(string $ability): void
     {
         abort_unless(Auth::user()->can($ability), 403);
     }
 
+    /**
+     * Restablece el estado transitorio y los errores del formulario de roles.
+     *
+     * Lo invocan las acciones de creación, guardado, eliminación y cancelación.
+     */
     private function resetForm(): void
     {
         $this->reset([

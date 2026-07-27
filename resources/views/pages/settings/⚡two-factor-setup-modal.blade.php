@@ -26,7 +26,10 @@ new class extends Component {
     public string $code = '';
 
     /**
-     * Mount the component.
+     * Recibe la política de confirmación de doble factor desde el componente de seguridad.
+     *
+     * Livewire lo ejecuta al montar el componente hijo incluido por security; el valor queda bloqueado
+     * para evitar que el cliente modifique el flujo de confirmación de Fortify.
      */
     public function mount(bool $requiresConfirmation): void
     {
@@ -34,6 +37,12 @@ new class extends Component {
     }
 
     #[On('start-two-factor-setup')]
+    /**
+     * Inicia la configuración de doble factor y obtiene los datos de enrolamiento.
+     *
+     * Livewire lo invoca al recibir el evento emitido desde security; delega la creación del secreto
+     * a Fortify y luego carga el QR y la clave manual para la cuenta autenticada.
+     */
     public function startTwoFactorSetup(): void
     {
         $enableTwoFactorAuthentication = app(EnableTwoFactorAuthentication::class);
@@ -43,7 +52,10 @@ new class extends Component {
     }
 
     /**
-     * Load the two-factor authentication setup data for the user.
+     * Carga el QR y la clave manual del secreto 2FA recién generado.
+     *
+     * Lo invoca startTwoFactorSetup(); refresca el usuario para leer el secreto persistido y captura
+     * errores de cifrado para no exponer datos incompletos en el modal.
      */
     private function loadSetupData(): void
     {
@@ -64,7 +76,10 @@ new class extends Component {
     }
 
     /**
-     * Show the two-factor verification step if necessary.
+     * Avanza a la confirmación o finaliza el flujo según la política de Fortify.
+     *
+     * Lo invoca wire:click desde el modal; si no se requiere confirmación, cierra el modal y emite
+     * two-factor-enabled para sincronizar el componente de seguridad.
      */
     public function showVerificationIfNecessary(): void
     {
@@ -81,7 +96,10 @@ new class extends Component {
     }
 
     /**
-     * Confirm two-factor authentication for the user.
+     * Confirma el código TOTP y completa la configuración de doble factor.
+     *
+     * Lo invoca wire:click; valida el código, delega la confirmación a Fortify y notifica al
+     * componente de seguridad mediante el evento two-factor-enabled.
      */
     public function confirmTwoFactor(ConfirmTwoFactorAuthentication $confirmTwoFactorAuthentication): void
     {
@@ -97,7 +115,9 @@ new class extends Component {
     }
 
     /**
-     * Reset two-factor verification state.
+     * Regresa del paso de confirmación al estado inicial del modal.
+     *
+     * Lo invoca wire:click desde el botón Back y descarta el código y los errores de validación.
      */
     public function resetVerification(): void
     {
@@ -107,7 +127,10 @@ new class extends Component {
     }
 
     /**
-     * Close the two-factor authentication modal.
+     * Descarta el estado sensible y visual del modal de doble factor.
+     *
+     * Lo invocan las acciones que completan o cierran el flujo y el evento @close del modal; borra
+     * QR, clave manual, código y errores antes de una nueva apertura.
      */
     public function closeModal(): void
     {
@@ -123,7 +146,12 @@ new class extends Component {
     }
 
     /**
-     * Get the current modal configuration state.
+     * Construye los textos correspondientes al paso actual del modal.
+     *
+     * La vista consume $this->modalConfig para mostrar instrucciones de enrolamiento, confirmación
+     * o finalización sin duplicar la lógica de estado en Blade.
+     *
+     * @return array{title: string, description: string, buttonText: string}
      */
     #[Computed]
     public function modalConfig(): array

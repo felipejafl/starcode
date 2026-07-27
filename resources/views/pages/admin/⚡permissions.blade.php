@@ -29,12 +29,22 @@ new #[Title('Permisos')] class extends Component {
      */
     public array $perPageOptions = [10, 20, 50, 100];
 
+    /**
+     * Autoriza el acceso inicial al listado de permisos.
+     *
+     * Livewire lo ejecuta al montar la ruta admin.permissions definida en routes/admin.php;
+     * aborta con 403 si el usuario autenticado no conserva el permiso de consulta.
+     */
     public function mount(): void
     {
         abort_unless(Auth::user()->can('permisos.ver'), 403);
     }
 
     /**
+     * Define las reglas del formulario de alta y edición de permisos.
+     *
+     * Livewire las consume durante save(); excluye el permiso editado de la unicidad.
+     *
      * @return array<string, array<int, mixed>>
      */
     protected function rules(): array
@@ -50,6 +60,11 @@ new #[Title('Permisos')] class extends Component {
     }
 
     #[Computed]
+    /**
+     * Obtiene la página de permisos con sus roles para la tabla administrativa.
+     *
+     * La vista consume $this->permissions; precarga roles para evitar consultas por fila.
+     */
     public function permissions(): LengthAwarePaginator
     {
         return Permission::query()
@@ -60,6 +75,11 @@ new #[Title('Permisos')] class extends Component {
             ->withQueryString();
     }
 
+    /**
+     * Restablece la paginación cuando Livewire actualiza filtros de la tabla.
+     *
+     * Livewire lo invoca por convención al modificar search o perPage mediante wire:model.live.
+     */
     public function updating(string $name): void
     {
         if ($name === 'perPage' || $name === 'search') {
@@ -67,12 +87,22 @@ new #[Title('Permisos')] class extends Component {
         }
     }
 
+    /**
+     * Prepara un formulario vacío para crear un permiso.
+     *
+     * Lo invoca wire:click desde el botón de creación y verifica el permiso correspondiente.
+     */
     public function create(): void
     {
         $this->authorizeAbility('permisos.crear');
         $this->resetForm();
     }
 
+    /**
+     * Carga un permiso en el formulario de edición.
+     *
+     * Lo invoca wire:click desde cada fila y elimina errores de una interacción anterior.
+     */
     public function edit(int $permissionId): void
     {
         $this->authorizeAbility('permisos.actualizar');
@@ -85,6 +115,11 @@ new #[Title('Permisos')] class extends Component {
         $this->resetErrorBag();
     }
 
+    /**
+     * Crea o actualiza un permiso y actualiza la caché de autorizaciones.
+     *
+     * Lo invoca wire:submit; invalida la caché de Spatie Permission antes de cerrar el modal.
+     */
     public function save(): void
     {
         $isCreating = $this->editingPermissionId === null;
@@ -115,6 +150,12 @@ new #[Title('Permisos')] class extends Component {
             : __('Permiso actualizado.'));
     }
 
+    /**
+     * Elimina un permiso que no sea el requisito de acceso administrativo.
+     *
+     * Lo invoca wire:click desde la tabla; protege admin.acceder e invalida la caché de Spatie
+     * Permission tras una baja válida.
+     */
     public function delete(int $permissionId): void
     {
         $this->authorizeAbility('permisos.eliminar');
@@ -138,17 +179,32 @@ new #[Title('Permisos')] class extends Component {
         Flux::toast(variant: 'success', text: __('Permiso eliminado.'));
     }
 
+    /**
+     * Descarta el estado del formulario y cierra el modal de permisos.
+     *
+     * Lo invoca la interacción de cancelación de la vista y no realiza cambios persistentes.
+     */
     public function cancel(): void
     {
         $this->resetForm();
         Flux::modal('permission-form')->close();
     }
 
+    /**
+     * Exige una capacidad administrativa para una acción del componente.
+     *
+     * Lo invocan las acciones públicas del CRUD y aborta la solicitud Livewire con 403 si falta.
+     */
     private function authorizeAbility(string $ability): void
     {
         abort_unless(Auth::user()->can($ability), 403);
     }
 
+    /**
+     * Restablece el estado transitorio y los errores del formulario de permisos.
+     *
+     * Lo invocan las acciones de creación, guardado, eliminación y cancelación.
+     */
     private function resetForm(): void
     {
         $this->reset([

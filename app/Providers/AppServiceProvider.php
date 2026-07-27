@@ -44,7 +44,10 @@ class AppServiceProvider extends ServiceProvider
     }
 
     /**
-     * Bootstrap any application services.
+     * Inicializa las convenciones globales y los listeners de auditoría.
+     *
+     * Lo ejecuta el contenedor de Laravel al arrancar la aplicación; registra reglas que afectan
+     * autorización, fechas, contraseñas y la captura de eventos de autenticación y permisos.
      */
     public function boot(): void
     {
@@ -53,7 +56,10 @@ class AppServiceProvider extends ServiceProvider
     }
 
     /**
-     * Configure default behaviors for production-ready applications.
+     * Configura comportamientos globales para los entornos de la aplicación.
+     *
+     * Define fechas inmutables, otorga acceso total al rol Super Administrador, bloquea comandos
+     * destructivos en producción y endurece la política de contraseñas en ese entorno. Lo invoca boot().
      */
     protected function configureDefaults(): void
     {
@@ -79,7 +85,10 @@ class AppServiceProvider extends ServiceProvider
     }
 
     /**
-     * Register event listeners for audit logging.
+     * Registra los listeners que convierten eventos de autenticación y permisos en auditorías.
+     *
+     * Lo invoca boot(); sus registros hacen que el dispatcher de Laravel ejecute los listeners
+     * correspondientes cuando Fortify, el guard web o Spatie Permission emiten esos eventos.
      */
     protected function configureAuditListeners(): void
     {

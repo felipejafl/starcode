@@ -6,6 +6,12 @@ use Laravel\Fortify\Events\TwoFactorAuthenticationDisabled;
 
 class LogTwoFactorDisabled
 {
+    /**
+     * Registra la desactivación de doble factor del usuario indicado por Fortify.
+     *
+     * Lo invoca el dispatcher de Laravel cuando Fortify emite TwoFactorAuthenticationDisabled y
+     * crea una actividad de autenticación con la IP y el agente de usuario de la solicitud.
+     */
     public function handle(TwoFactorAuthenticationDisabled $event): void
     {
         activity('auth')

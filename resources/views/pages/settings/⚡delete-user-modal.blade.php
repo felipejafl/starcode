@@ -11,7 +11,10 @@ new class extends Component {
     public string $password = '';
 
     /**
-     * Delete the currently authenticated user.
+     * Elimina la cuenta autenticada después de confirmar su contraseña.
+     *
+     * Lo invoca wire:submit desde el modal; cierra e invalida la sesión mediante Logout antes de
+     * eliminar el modelo y navegar a la página inicial.
      */
     public function deleteUser(Logout $logout): void
     {

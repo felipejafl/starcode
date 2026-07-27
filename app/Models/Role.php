@@ -10,6 +10,12 @@ class Role extends SpatieRole
 {
     use LogsActivity;
 
+    /**
+     * Define los atributos del rol que Spatie Activitylog debe registrar.
+     *
+     * Lo consume el trait LogsActivity durante las altas, modificaciones y bajas de roles,
+     * excluyendo cambios que solo actualizan la marca de tiempo.
+     */
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()

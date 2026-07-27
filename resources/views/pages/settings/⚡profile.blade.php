@@ -15,7 +15,9 @@ new #[Title('Profile settings')] class extends Component {
     public string $email = '';
 
     /**
-     * Mount the component.
+     * Inicializa el formulario con los datos del usuario autenticado.
+     *
+     * Livewire lo ejecuta al montar la ruta profile.edit definida en routes/settings.php.
      */
     public function mount(): void
     {
@@ -24,7 +26,10 @@ new #[Title('Profile settings')] class extends Component {
     }
 
     /**
-     * Update the profile information for the currently authenticated user.
+     * Actualiza los datos de perfil del usuario autenticado.
+     *
+     * Lo invoca wire:submit; si cambia el correo, invalida su verificación antes de guardar para
+     * que Fortify requiera confirmar nuevamente la nueva dirección.
      */
     public function updateProfileInformation(): void
     {
@@ -44,7 +49,10 @@ new #[Title('Profile settings')] class extends Component {
     }
 
     /**
-     * Send an email verification notification to the current user.
+     * Reenvía la notificación de verificación de correo si aún es necesaria.
+     *
+     * Lo invoca wire:click desde el enlace de la vista; delega el envío al contrato de verificación
+     * de Laravel y redirige al panel si el correo ya había sido confirmado.
      */
     public function resendVerificationNotification(): void
     {
@@ -62,12 +70,24 @@ new #[Title('Profile settings')] class extends Component {
     }
 
     #[Computed]
+    /**
+     * Indica si debe mostrarse el aviso de correo sin verificar.
+     *
+     * La vista consume $this->hasUnverifiedEmail; solo habilita el aviso para modelos que implementan
+     * MustVerifyEmail y cuyo correo todavía no fue confirmado.
+     */
     public function hasUnverifiedEmail(): bool
     {
         return Auth::user() instanceof MustVerifyEmail && ! Auth::user()->hasVerifiedEmail();
     }
 
     #[Computed]
+    /**
+     * Indica si la interfaz puede mostrar la opción de eliminación de cuenta.
+     *
+     * La vista consume $this->showDeleteUser; oculta la eliminación mientras un modelo verificable
+     * tenga un correo pendiente de confirmar.
+     */
     public function showDeleteUser(): bool
     {
         return ! Auth::user() instanceof MustVerifyEmail

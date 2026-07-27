@@ -22,6 +22,12 @@ class User extends Authenticatable
     /** @use HasFactory<UserFactory> */
     use HasFactory, HasRoles, LogsActivity, Notifiable, TwoFactorAuthenticatable;
 
+    /**
+     * Define los atributos del usuario que Spatie Activitylog debe registrar.
+     *
+     * Lo consume el trait LogsActivity al crear actividades del modelo; evita entradas que solo
+     * cambian marcas de tiempo o el estado de verificación de correo.
+     */
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
@@ -30,7 +36,10 @@ class User extends Authenticatable
     }
 
     /**
-     * Get the attributes that should be cast.
+     * Define las conversiones de atributos persistidos del usuario.
+     *
+     * Lo consume Eloquent al hidratar y guardar el modelo, para tratar la verificación como fecha
+     * y aplicar hashing automático al valor de la contraseña.
      *
      * @return array<string, string>
      */
@@ -43,7 +52,9 @@ class User extends Authenticatable
     }
 
     /**
-     * Get the user's initials
+     * Obtiene hasta dos iniciales a partir del nombre del usuario.
+     *
+     * Lo consumen las vistas que muestran una representación breve del usuario; no modifica el modelo.
      */
     public function initials(): string
     {

@@ -25,7 +25,10 @@ new #[Title('Security settings')] class extends Component {
     public bool $requiresConfirmation;
 
     /**
-     * Mount the component.
+     * Inicializa el estado de seguridad y la disponibilidad de doble factor.
+     *
+     * Livewire lo ejecuta al montar la ruta security.edit definida en routes/settings.php; elimina
+     * una configuración 2FA incompleta y consulta las opciones de Fortify que controlan su flujo.
      */
     public function mount(DisableTwoFactorAuthentication $disableTwoFactorAuthentication): void
     {
@@ -42,7 +45,10 @@ new #[Title('Security settings')] class extends Component {
     }
 
     /**
-     * Update the password for the currently authenticated user.
+     * Actualiza la contraseña del usuario autenticado tras confirmar la vigente.
+     *
+     * Lo invoca wire:submit; limpia los campos sensibles tanto cuando falla la validación como
+     * después de persistir la nueva contraseña mediante el cast hash del modelo.
      */
     public function updatePassword(): void
     {
@@ -67,7 +73,10 @@ new #[Title('Security settings')] class extends Component {
     }
 
     /**
-     * Handle the two-factor authentication enabled event.
+     * Refleja que el modal hijo completó la activación de doble factor.
+     *
+     * Livewire lo invoca al recibir el evento two-factor-enabled emitido por el componente de
+     * configuración, sin requerir una recarga completa de la página.
      */
     #[On('two-factor-enabled')]
     public function onTwoFactorEnabled(): void
@@ -76,7 +85,10 @@ new #[Title('Security settings')] class extends Component {
     }
 
     /**
-     * Disable two-factor authentication for the user.
+     * Desactiva el doble factor del usuario autenticado.
+     *
+     * Lo invoca wire:click desde la vista; delega la eliminación de secretos y códigos a la acción
+     * de Fortify, que a su vez emite el evento auditado de desactivación.
      */
     public function disable(DisableTwoFactorAuthentication $disableTwoFactorAuthentication): void
     {

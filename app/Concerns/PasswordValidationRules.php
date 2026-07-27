@@ -8,7 +8,10 @@ use Illuminate\Validation\Rules\Password;
 trait PasswordValidationRules
 {
     /**
-     * Get the validation rules used to validate passwords.
+     * Devuelve las reglas para una nueva contraseña y su confirmación.
+     *
+     * Lo consumen las acciones de Fortify y los componentes Livewire de seguridad y administración;
+     * Password::default() aplica la política definida por AppServiceProvider.
      *
      * @return array<int, ValidationRule|array<mixed>|string>
      */
@@ -18,7 +21,9 @@ trait PasswordValidationRules
     }
 
     /**
-     * Get the validation rules used to validate the current password.
+     * Devuelve las reglas para confirmar la contraseña vigente del usuario autenticado.
+     *
+     * Lo consumen los componentes Livewire que cambian contraseñas o eliminan cuentas.
      *
      * @return array<int, ValidationRule|array<mixed>|string>
      */

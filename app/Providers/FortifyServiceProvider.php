@@ -21,7 +21,10 @@ class FortifyServiceProvider extends ServiceProvider
     }
 
     /**
-     * Bootstrap any application services.
+     * Configura las integraciones de Fortify al iniciar la aplicación.
+     *
+     * Lo ejecuta el contenedor de Laravel y registra la acción de restablecimiento, las vistas
+     * de autenticación y los limitadores que consumen las rutas administradas por Fortify.
      */
     public function boot(): void
     {
@@ -31,7 +34,10 @@ class FortifyServiceProvider extends ServiceProvider
     }
 
     /**
-     * Configure Fortify actions.
+     * Asocia el restablecimiento de contraseña con la acción propia de la aplicación.
+     *
+     * Lo invoca boot(); Fortify resuelve ResetUserPassword al procesar solicitudes válidas a
+     * su flujo de restablecimiento de contraseña.
      */
     private function configureActions(): void
     {
@@ -39,7 +45,10 @@ class FortifyServiceProvider extends ServiceProvider
     }
 
     /**
-     * Configure Fortify views.
+     * Asocia las pantallas de autenticación con las vistas Livewire de la aplicación.
+     *
+     * Lo invoca boot(); Fortify utiliza estos callbacks al responder sus rutas de inicio de sesión,
+     * verificación de correo, desafío 2FA, confirmación y restablecimiento de contraseña.
      */
     private function configureViews(): void
     {
@@ -52,7 +61,10 @@ class FortifyServiceProvider extends ServiceProvider
     }
 
     /**
-     * Configure rate limiting.
+     * Define los limitadores para el inicio de sesión y el desafío de doble factor.
+     *
+     * Lo invoca boot(); Fortify consume estas claves para limitar a cinco intentos por minuto,
+     * identificando el desafío por la sesión y el inicio por correo normalizado e IP.
      */
     private function configureRateLimiting(): void
     {

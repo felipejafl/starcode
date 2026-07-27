@@ -40,12 +40,23 @@ new #[Title('Usuarios')] class extends Component {
      */
     public array $perPageOptions = [10, 20, 50, 100];
 
+    /**
+     * Autoriza el acceso inicial al listado de usuarios.
+     *
+     * Livewire lo ejecuta al montar la ruta admin.users definida en routes/admin.php; aborta con
+     * 403 si el usuario autenticado no conserva el permiso de consulta.
+     */
     public function mount(): void
     {
         abort_unless(Auth::user()->can('usuarios.ver'), 403);
     }
 
     /**
+     * Define las reglas del formulario de alta y edición de usuarios.
+     *
+     * Livewire las consume durante save(); vuelve opcional la contraseña al editar y valida que
+     * los roles seleccionados existan antes de sincronizarlos.
+     *
      * @return array<string, array<int, mixed>>
      */
     protected function rules(): array
@@ -63,6 +74,12 @@ new #[Title('Usuarios')] class extends Component {
     }
 
     #[Computed]
+    /**
+     * Obtiene la página de usuarios con sus roles para la tabla administrativa.
+     *
+     * La vista consume $this->users; carga los roles para evitar consultas por fila y conserva
+     * búsqueda, paginación y parámetros de consulta en la URL.
+     */
     public function users(): LengthAwarePaginator
     {
         return User::query()
@@ -76,6 +93,11 @@ new #[Title('Usuarios')] class extends Component {
     }
 
     #[Computed]
+    /**
+     * Obtiene los roles disponibles para el formulario de usuario.
+     *
+     * La vista consume $this->availableRoles al renderizar las casillas de selección.
+     */
     public function availableRoles(): \Illuminate\Database\Eloquent\Collection
     {
         return Role::query()
@@ -83,6 +105,11 @@ new #[Title('Usuarios')] class extends Component {
             ->get();
     }
 
+    /**
+     * Restablece la paginación cuando Livewire actualiza filtros de la tabla.
+     *
+     * Livewire lo invoca por convención al modificar search o perPage mediante wire:model.live.
+     */
     public function updating(string $name): void
     {
         if ($name === 'perPage' || $name === 'search') {
@@ -90,12 +117,24 @@ new #[Title('Usuarios')] class extends Component {
         }
     }
 
+    /**
+     * Prepara un formulario vacío para crear un usuario.
+     *
+     * Lo invoca wire:click desde el botón de creación; autoriza la operación antes de restablecer
+     * cualquier estado de edición que hubiera quedado en el modal.
+     */
     public function create(): void
     {
         $this->authorizeAbility('usuarios.crear');
         $this->resetForm();
     }
 
+    /**
+     * Carga un usuario y sus roles en el formulario de edición.
+     *
+     * Lo invoca wire:click desde cada fila; consulta el modelo, restablece contraseñas transitorias
+     * y elimina errores de una interacción anterior.
+     */
     public function edit(int $userId): void
     {
         $this->authorizeAbility('usuarios.actualizar');
@@ -112,6 +151,12 @@ new #[Title('Usuarios')] class extends Component {
         $this->resetErrorBag();
     }
 
+    /**
+     * Crea o actualiza un usuario y sincroniza sus roles seleccionados.
+     *
+     * Lo invoca wire:submit del formulario; valida según el modo, asigna la contraseña solo si se
+     * recibió una nueva y cierra el modal tras persistir los cambios.
+     */
     public function save(): void
     {
         $isCreating = $this->editingUserId === null;
@@ -151,6 +196,12 @@ new #[Title('Usuarios')] class extends Component {
             : __('Usuario actualizado.'));
     }
 
+    /**
+     * Elimina un usuario administrativo que no sea el actor actual.
+     *
+     * Lo invoca wire:click desde la tabla; autoriza la baja, evita la autoeliminación y limpia el
+     * formulario si la fila eliminada estaba en edición.
+     */
     public function delete(int $userId): void
     {
         $this->authorizeAbility('usuarios.eliminar');
@@ -170,17 +221,34 @@ new #[Title('Usuarios')] class extends Component {
         Flux::toast(variant: 'success', text: __('Usuario eliminado.'));
     }
 
+    /**
+     * Descarta el estado del formulario y cierra el modal de usuario.
+     *
+     * Lo invoca la interacción de cancelación de la vista y no realiza cambios persistentes.
+     */
     public function cancel(): void
     {
         $this->resetForm();
         Flux::modal('user-form')->close();
     }
 
+    /**
+     * Exige una capacidad administrativa para una acción del componente.
+     *
+     * Lo invocan las acciones públicas create(), edit(), save() y delete(); aborta la solicitud
+     * Livewire con 403 si la autorización dejó de ser válida.
+     */
     private function authorizeAbility(string $ability): void
     {
         abort_unless(Auth::user()->can($ability), 403);
     }
 
+    /**
+     * Restablece el estado transitorio y los errores del formulario de usuario.
+     *
+     * Lo invocan las acciones de creación, guardado, eliminación y cancelación para impedir que
+     * datos sensibles o errores de una operación anterior permanezcan en el modal.
+     */
     private function resetForm(): void
     {
         $this->reset([

@@ -31,12 +31,24 @@ new #[Title('Auditoría')] class extends Component {
      */
     public array $perPageOptions = [10, 20, 50, 100];
 
+    /**
+     * Autoriza el acceso inicial al registro de auditoría.
+     *
+     * Livewire lo ejecuta al montar la ruta admin.audit-log definida en routes/admin.php; aborta
+     * con 403 si el usuario autenticado no conserva el permiso auditoria.ver.
+     */
     public function mount(): void
     {
         abort_unless(Auth::user()->can('auditoria.ver'), 403);
     }
 
     #[Computed]
+    /**
+     * Obtiene las actividades de auditoría filtradas y paginadas.
+     *
+     * La vista consume $this->entries; precarga el actor y combina filtros de URL para buscar por
+     * actividad, sujeto, actor, fechas y tipo sin alterar los registros almacenados.
+     */
     public function entries(): LengthAwarePaginator
     {
         return Activity::query()
@@ -63,6 +75,11 @@ new #[Title('Auditoría')] class extends Component {
             ->withQueryString();
     }
 
+    /**
+     * Restablece la paginación cuando Livewire actualiza un filtro de auditoría.
+     *
+     * Livewire lo invoca por convención para las propiedades modificadas mediante wire:model.
+     */
     public function updating(string $name): void
     {
         if (in_array($name, ['perPage', 'search', 'date_start', 'date_end', 'action_type'], true)) {
@@ -71,6 +88,13 @@ new #[Title('Auditoría')] class extends Component {
     }
 
     #[Computed]
+    /**
+     * Proporciona las categorías de actividad disponibles para el selector de filtros.
+     *
+     * La vista consume $this->actionTypes al renderizar el campo wire:model.live action_type.
+     *
+     * @return array<string, string>
+     */
     public function actionTypes(): array
     {
         return [
@@ -80,6 +104,12 @@ new #[Title('Auditoría')] class extends Component {
         ];
     }
 
+    /**
+     * Obtiene una etiqueta legible para el actor de una actividad.
+     *
+     * La vista la invoca por cada fila; identifica actividades sin actor como Sistema, situación
+     * posible en eventos ejecutados por consola, seeders o procesos automáticos.
+     */
     public function causerName(?Activity $activity): string
     {
         if ($activity === null || $activity->causer === null) {
@@ -89,6 +119,12 @@ new #[Title('Auditoría')] class extends Component {
         return $activity->causer->name ?? __('Desconocido');
     }
 
+    /**
+     * Obtiene una etiqueta legible para el sujeto de una actividad.
+     *
+     * La vista la invoca por cada fila; conserva la descripción cuando el sujeto ya no existe,
+     * por ejemplo después de registrar la eliminación de un modelo.
+     */
     public function subjectLabel(?Activity $activity): string
     {
         if ($activity === null || $activity->subject === null) {
@@ -104,6 +140,12 @@ new #[Title('Auditoría')] class extends Component {
         return "{$model} #{$activity->subject->id}";
     }
 
+    /**
+     * Traduce los códigos de actividad conocidos a etiquetas para la tabla.
+     *
+     * La vista la invoca por cada fila; los códigos no previstos se convierten en texto legible
+     * para que nuevos eventos de auditoría sigan siendo visibles.
+     */
     public function actionLabel(string $description): string
     {
         return match ($description) {
@@ -123,6 +165,12 @@ new #[Title('Auditoría')] class extends Component {
         };
     }
 
+    /**
+     * Limpia los filtros de auditoría conservando el tamaño de página elegido.
+     *
+     * Lo invoca wire:click desde el botón Limpiar filtros; la actualización de propiedades hace
+     * que Livewire vuelva a calcular el listado sin condiciones de búsqueda ni fecha.
+     */
     public function resetFilters(): void
     {
         $this->search = '';
